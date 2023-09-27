@@ -1,4 +1,3 @@
-const { ObjectId } = require('mongodb');
 const client = require('./client');
 const express = require('express');
 const adminRouter = express.Router();
