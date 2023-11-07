@@ -7,6 +7,8 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const usersCollection = client.db('bookTreasure').collection('users');
+        const bookList        = client.db('bookTreasure').collection('bookList');
+        const requestBook     = client.db('bookTreasure').collection('requestBook');
 
         userRouter.route('/users')
             .post(async (req, res) => {
@@ -19,6 +21,23 @@ async function run() {
                 const result = await usersCollection.insertOne(user);
                 res.send(result)
             })
+
+
+           userRouter.route('/findUserByEmail')
+           .post(async(req,res)=>{
+             const email = req.body;
+             const user = await usersCollection.findOne(email);
+              res.send(user);
+           })
+
+           userRouter.route('/AddBook')
+           .post(async(req,res)=>{
+             const data = req.body;
+             await requestBook.insertOne(data);
+             res.send({status:true});
+           })
+
+
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
