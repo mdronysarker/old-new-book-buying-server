@@ -45,7 +45,21 @@ async function run() {
      bookRouter.route('/getBookData')
       .post(async(req,res)=>{
         const data = req.body;
-        console.log("Data ",data);
+
+        const finder = {};
+        if(data.type==='new') finder.bookType='new';
+        else if(data.type==='old') finder.bookType='old';
+
+        if(data.category!==null){
+          finder.category = data.category;
+        }
+        // console.log("Finder  ",finder);
+        const result = await bookList.find(finder).toArray();
+        res.send(result)
+
+
+
+
       })
 
 
