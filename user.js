@@ -1,6 +1,7 @@
 const client = require('./client');
 const express = require('express');
 const userRouter = express.Router();
+const { ObjectId } = require('mongodb');
 
 async function run() {
     try {
@@ -9,6 +10,7 @@ async function run() {
         const usersCollection = client.db('bookTreasure').collection('users');
         const bookList        = client.db('bookTreasure').collection('bookList');
         const requestBook     = client.db('bookTreasure').collection('requestBook');
+        const cartList        = client.db('bookTreasure').collection('cartList');
 
         userRouter.route('/users')
             .post(async (req, res) => {
@@ -36,6 +38,58 @@ async function run() {
              await requestBook.insertOne(data);
              res.send({status:true});
            })
+
+           // Cart List
+           userRouter.route('/addToCart')
+           .post(async(req,res)=>{
+             const data = req.body;
+             await cartList.insertOne(data);
+             res.send({status:true});
+           })
+
+userRouter.route('/findCartItem').post(async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const result = await bookList.aggregate([{
+        $lookup: {
+          from: "cartList",
+          let: { bookId: '$_id' },
+          pipeline: [{
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$userId", userId] },
+                    { $eq: [{ $toString: "$productId" }, { $toString: "$$bookId" }] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "joinedData"
+        }
+      },{
+        $unwind: "$joinedData"
+      },{
+        $project: {
+          _id: 1, // Exclude the default _id field
+          image: 1,
+          bookName: 1,
+          price: 1,
+          bookQuantity:1
+        }
+      }
+    ]).toArray();
+
+    console.log("result => ", result);
+    res.json(result);
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
 
 
         // Send a ping to confirm a successful connection
