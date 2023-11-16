@@ -71,7 +71,7 @@ userRouter.route('/findCartItem').post(async (req, res) => {
         $unwind: "$joinedData"
       },{
         $project: {
-          _id: 1, // Exclude the default _id field
+          _id: 1,
           image: 1,
           bookName: 1,
           price: 1,
@@ -80,7 +80,7 @@ userRouter.route('/findCartItem').post(async (req, res) => {
       }
     ]).toArray();
 
-    console.log("result => ", result);
+    // console.log("result => ", result);
     res.json(result);
   } catch (error) {
     console.error("Error: ", error);

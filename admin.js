@@ -32,6 +32,18 @@ async function run() {
        res.send({status:true});
      })
 
+     adminRouter.route('/getBookCollection')
+     .post(async(req,res)=>{
+       const type = req.body.type;
+       let result;
+       if(type==='old'){
+         result = await bookList.find({bookType:type}).toArray();
+       } else if(type==='new'){
+         result = await bookList.find({bookType:type}).toArray();
+       }
+       res.send(result);
+     })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
