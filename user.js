@@ -11,6 +11,7 @@ async function run() {
         const bookList        = client.db('bookTreasure').collection('bookList');
         const requestBook     = client.db('bookTreasure').collection('requestBook');
         const cartList        = client.db('bookTreasure').collection('cartList');
+        const orderList       = client.db('bookTreasure').collection('orderList')
 
         userRouter.route('/users')
             .post(async (req, res) => {
@@ -47,8 +48,9 @@ async function run() {
              res.send({status:true});
            })
 
-userRouter.route('/findCartItem').post(async (req, res) => {
-  try {
+userRouter.route('/findCartItem')
+  .post(async (req, res) => {
+   try {
     const userId = req.body.userId;
     const result = await bookList.aggregate([{
         $lookup: {
@@ -71,15 +73,16 @@ userRouter.route('/findCartItem').post(async (req, res) => {
         $unwind: "$joinedData"
       },{
         $project: {
+          bookId:1,
           _id: 1,
           image: 1,
           bookName: 1,
           price: 1,
-          bookQuantity:1
+          bookQuantity:1,
+          bookType:1
         }
       }
     ]).toArray();
-
     // console.log("result => ", result);
     res.json(result);
   } catch (error) {
@@ -89,8 +92,85 @@ userRouter.route('/findCartItem').post(async (req, res) => {
 });
 
 
+ //Book Details
+    userRouter.route('/getProductDetails')
+    .post(async(req,res)=>{
+      //  console.log('productId => ',req.body);
+      const productId = new ObjectId(req.body.productId);
+      const book = await bookList.findOne({_id:productId});
+      res.send(book);
+    })
+
+    userRouter.route('/getRelatedBook')
+    .post(async(req,res)=>{
+      const data = req.body.category;
+      const list = await bookList.find({category:data}).limit(3).toArray();
+      res.send(list);
+    })
+
+    userRouter.route('/deleteCartItem')
+    .post(async(req,res)=>{
+      const productId = req.body.productId;
+      await cartList.deleteOne({productId});
+      res.send({status:true});
+    })
+
+    userRouter.route('/addCompleteOrder')
+    .post(async(req,res)=>{
+      try {
+
+        const orders = req.body.productList;
+        const userId = new ObjectId(req.body.userId);
+
+        for(order of orders){
+          const type = order.bookType;
+          console.log("type => ",type);
+          const admin = await usersCollection.findOne({userRole:'admin'});
+          let adminMoney;
+          if(type==='new'){
+            adminMoney = admin.totalMoney + order.quantity*order.price;
+          } else if(type==='old'){
+            adminMoney = admin.totalMoney + order.quantity*order.price - order.quantity*order.price*0.1;
+            const user = await usersCollection.findOne({_id:userId});
+            const userMoney = user.totalMoney + order.quantity*order.price*0.1;
+            console.log('userId userMoney => ',userId,+' '+ userMoney+' '+order.quantity);
+            await usersCollection.updateOne({_id:userId},{$set:{totalMoney:userMoney}});
+          }
+          console.log('admin => ',adminMoney);
+          await usersCollection.updateOne({userRole:'admin'}, {$set:{totalMoney:adminMoney}});
+
+          const orderItem = {
+              bookName: order.bookName,
+              quantity: order.quantity,
+              price: order.price,
+              userId: userId,
+              date: new Date(),
+              bookId: order._id
+          }
+
+          await orderList.insertOne(orderItem);
+
+          const productId = new ObjectId(order._id);
+          const orderQuantity = order.quantity;
+          const product = await bookList.findOne({_id:productId});
+          const productQuantity = product.bookQuantity;
+
+          if(orderQuantity<productQuantity) {
+            const dif = productQuantity - orderQuantity;
+            await bookList.updateOne({_id:productId}, {$set:{bookQuantity:dif}});
+          } else if(orderQuantity===productQuantity){
+            await bookList.deleteOne({_id:productId});
+          }
+        }
 
 
+      } catch (e) {
+        console.log(e);
+      } finally{
+          res.send({status:true});
+      }
+
+    })
 
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });

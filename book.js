@@ -57,9 +57,6 @@ async function run() {
         const result = await bookList.find(finder).toArray();
         res.send(result)
 
-
-
-
       })
 
 
