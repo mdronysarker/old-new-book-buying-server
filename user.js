@@ -156,7 +156,8 @@ userRouter.route('/findCartItem')
               price: order.price*order.quantity,
               userId: userId,
               date: new Date(),
-              bookId: order._id
+              bookId: order._id,
+              bookType:order.bookType
           }
 
           await orderList.insertOne(orderItem);
@@ -201,12 +202,35 @@ userRouter.route('/findCartItem')
      .post(async(req,res)=>{
        try {
          const userId = new ObjectId(req.body.userId);
-         const result = await usersCollection.findOne({userId});
+         const result = await usersCollection.findOne({_id:userId});
          res.send(result)
        } catch (e) {
          console.log(e);
        }
       })
+
+      userRouter.route('/getNewarrivalBookList')
+  .get(async (req, res) => {
+    try {
+      const result = await bookList.find({}).limit(4).sort({ createdAt: 1 }).toArray();
+      res.send(result);
+    } catch (e) {
+      console.log(e);
+      res.status(500).send("Internal Server Error");
+    }
+  });
+
+      userRouter.route('/getBestSellerBookList')
+        .get(async (req, res) => {
+        try {
+          const result = await bookList.find({}).limit(4).sort({ bookQuantity: -1 }).toArray();
+          res.send(result);
+        } catch (e) {
+          console.log(e);
+          res.status(500).send("Internal Server Error");
+        }
+    });
+
 
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });

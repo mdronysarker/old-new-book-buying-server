@@ -11,6 +11,7 @@ async function run() {
      const usersCollection = client.db('bookTreasure').collection('users');
      const bookList        = client.db('bookTreasure').collection('bookList');
      const requestBook     = client.db('bookTreasure').collection('requestBook');
+     const orderList     = client.db('bookTreasure').collection('orderList');
 
      adminRouter.route('/getAdminApprovedBook')
      .get(async(req,res)=>{
@@ -42,6 +43,38 @@ async function run() {
          result = await bookList.find({bookType:type}).toArray();
        }
        res.send(result);
+     })
+
+     adminRouter.route('/getReport')
+     .get(async(req,res)=>{
+       try {
+      const currentDate = new Date();
+     const tenDaysAgo = new Date();
+     tenDaysAgo.setDate(currentDate.getDate() - 10);
+
+     const pipeline = [
+       {
+         $match: {
+           date: { $gte: tenDaysAgo, $lte: currentDate },
+         },
+       },
+       {
+         $group: {
+           _id: "$bookType", // Group by book type
+           totalQuantity: { $sum: "$quantity" }, // Total quantity for each type
+         },
+       },
+     ];
+
+     const result = await orderList.aggregate(pipeline).toArray();
+     console.log(result);
+
+     res.send(result);
+
+         } catch (e) {
+           console.log(e);
+         }
+
      })
 
 
