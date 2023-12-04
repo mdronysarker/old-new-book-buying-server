@@ -44,8 +44,14 @@ async function run() {
            userRouter.route('/addToCart')
            .post(async(req,res)=>{
              const data = req.body;
-             await cartList.insertOne(data);
-             res.send({status:true});
+             const findBook = await cartList.find({$and:[{userId:data.userId,productId:data.productId}]}).toArray();
+             if(findBook.length>0){
+               res.send({status:false})
+             } else {
+               await cartList.insertOne(data);
+               res.send({status:true});
+             }
+
            })
 
 userRouter.route('/findCartItem')
@@ -79,7 +85,8 @@ userRouter.route('/findCartItem')
           bookName: 1,
           price: 1,
           bookQuantity:1,
-          bookType:1
+          bookType:1,
+          userId:1
         }
       }
     ]).toArray();
@@ -118,31 +125,35 @@ userRouter.route('/findCartItem')
     userRouter.route('/addCompleteOrder')
     .post(async(req,res)=>{
       try {
-
         const orders = req.body.productList;
+
+        // ordered userID
         const userId = new ObjectId(req.body.userId);
 
         for(order of orders){
           const type = order.bookType;
-          console.log("type => ",type);
+
+          const bookAdderId = new ObjectId(order.userId);
+            console.log("userId => ",userId);
           const admin = await usersCollection.findOne({userRole:'admin'});
+          const bookAdder = await usersCollection.findOne({_id:bookAdderId})
           let adminMoney;
           if(type==='new'){
             adminMoney = admin.totalMoney + order.quantity*order.price;
           } else if(type==='old'){
             adminMoney = admin.totalMoney + order.quantity*order.price - order.quantity*order.price*0.1;
-            const user = await usersCollection.findOne({_id:userId});
-            const userMoney = user.totalMoney + order.quantity*order.price*0.1;
-            console.log('userId userMoney => ',userId,+' '+ userMoney+' '+order.quantity);
-            await usersCollection.updateOne({_id:userId},{$set:{totalMoney:userMoney}});
+          //  const user = await usersCollection.findOne({_id:userId});
+            const userMoney = bookAdder.totalMoney + order.quantity*order.price*0.1;
+          //  console.log('userId userMoney => ',userId,+' '+ userMoney+' '+order.quantity);
+            await usersCollection.updateOne({_id:bookAdderId},{$set:{totalMoney:userMoney}});
           }
-          console.log('admin => ',adminMoney);
+        //  console.log('admin => ',adminMoney);
           await usersCollection.updateOne({userRole:'admin'}, {$set:{totalMoney:adminMoney}});
 
           const orderItem = {
               bookName: order.bookName,
               quantity: order.quantity,
-              price: order.price,
+              price: order.price*order.quantity,
               userId: userId,
               date: new Date(),
               bookId: order._id
@@ -161,6 +172,9 @@ userRouter.route('/findCartItem')
           } else if(orderQuantity===productQuantity){
             await bookList.deleteOne({_id:productId});
           }
+
+          await cartList.deleteOne({userId:req.body.userId});
+
         }
 
 
@@ -171,6 +185,28 @@ userRouter.route('/findCartItem')
       }
 
     })
+
+    userRouter.route('/getPrevousOrder')
+    .post(async(req,res)=>{
+      try {
+        const userId = new ObjectId(req.body.userId);
+        const list = await orderList.find({userId}).toArray();
+        res.send(list);
+      } catch (e) {
+        console.log(e);
+      }
+    })
+
+    userRouter.route('/getUserInfo')
+     .post(async(req,res)=>{
+       try {
+         const userId = new ObjectId(req.body.userId);
+         const result = await usersCollection.findOne({userId});
+         res.send(result)
+       } catch (e) {
+         console.log(e);
+       }
+      })
 
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });
