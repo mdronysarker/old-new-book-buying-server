@@ -134,7 +134,6 @@ userRouter.route('/findCartItem')
           const type = order.bookType;
 
           const bookAdderId = new ObjectId(order.userId);
-            console.log("userId => ",userId);
           const admin = await usersCollection.findOne({userRole:'admin'});
           const bookAdder = await usersCollection.findOne({_id:bookAdderId})
           let adminMoney;
@@ -230,7 +229,6 @@ userRouter.route('/findCartItem')
           res.status(500).send("Internal Server Error");
         }
     });
-
 
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });

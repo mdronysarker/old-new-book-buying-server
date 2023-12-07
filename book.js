@@ -41,11 +41,20 @@ async function run() {
        res.send({status:true});
      })
 
+     bookRouter.route('/getTotalBook')
+      .get(async(req,res)=>{
+        try {
+          const totalBook = await bookList.countDocuments({});
+          res.send({totalBook});
+        } catch (e) {
+          console.log(e);
+        }
+      })
+
 
      bookRouter.route('/getBookData')
       .post(async(req,res)=>{
         const data = req.body;
-
         const finder = {};
         if(data.type==='new') finder.bookType='new';
         else if(data.type==='old') finder.bookType='old';
@@ -53,8 +62,11 @@ async function run() {
         if(data.category!==null){
           finder.category = data.category;
         }
+
+        const bookSkip = (data.page - 1)*(data.perPage);
+
         // console.log("Finder  ",finder);
-        const result = await bookList.find(finder).toArray();
+        const result = await bookList.find(finder).skip(bookSkip).limit(data.perPage).toArray();
         res.send(result)
 
       })
