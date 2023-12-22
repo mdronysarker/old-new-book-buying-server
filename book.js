@@ -68,7 +68,7 @@ async function run() {
       bookRouter.route('/getDonatedBookList')
       .post(async(req,res) =>{
         try {
-          const userId = req.body.userId;
+          const userId = new ObjectId(req.body.userId);
           const list = await bookList.find({userId}).toArray();
           res.send(list);
         } catch (e) {
