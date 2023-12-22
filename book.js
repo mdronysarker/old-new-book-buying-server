@@ -7,7 +7,6 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
      await client.connect();
-
      const usersCollection = client.db('bookTreasure').collection('users');
      const bookList        = client.db('bookTreasure').collection('bookList');
      const requestBook     = client.db('bookTreasure').collection('requestBook');
@@ -36,7 +35,6 @@ async function run() {
      bookRouter.route('/deleteCategory')
      .post(async(req,res)=>{
        const id = new ObjectId(req.body);
-       console.log("category Id => ",id);
        await categoryList.deleteOne({_id:id});
        res.send({status:true});
      })
@@ -62,13 +60,9 @@ async function run() {
         if(data.category!==null){
           finder.category = data.category;
         }
-
         const bookSkip = (data.page - 1)*(data.perPage);
-
-        // console.log("Finder  ",finder);
         const result = await bookList.find(finder).skip(bookSkip).limit(data.perPage).toArray();
         res.send(result)
-
       })
 
       bookRouter.route('/getDonatedBookList')
@@ -82,9 +76,6 @@ async function run() {
         }
 
       })
-
-
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

@@ -46,7 +46,7 @@ async function run() {
      })
 
      adminRouter.route('/getReport')
-     .get(async(req,res)=>{
+     .get(async(req,res)=> {
        try {
       const currentDate = new Date();
      const tenDaysAgo = new Date();
@@ -58,16 +58,16 @@ async function run() {
            date: { $gte: tenDaysAgo, $lte: currentDate },
          },
        },
-       {
-         $group: {
-           _id: "$bookType", // Group by book type
-           totalQuantity: { $sum: "$quantity" }, // Total quantity for each type
-         },
-       },
+       // {
+       //   $group: {
+       //     _id: "$bookType",
+       //     totalQuantity: { $sum: "$quantity" },
+       //   },
+       // },
      ];
 
      const result = await orderList.aggregate(pipeline).toArray();
-     console.log(result);
+     // console.log(result);
 
      res.send(result);
 
