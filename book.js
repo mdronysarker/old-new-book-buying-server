@@ -69,7 +69,9 @@ async function run() {
       .post(async(req,res) =>{
         try {
           const userId = new ObjectId(req.body.userId);
-          const list = await bookList.find({userId}).toArray();
+         // console.log('user id ', req.body.userId);
+         // console.log('object id ',userId)
+          const list = await bookList.find({userId:req.body.userId}).toArray();
           res.send(list);
         } catch (e) {
           console.log(e);
