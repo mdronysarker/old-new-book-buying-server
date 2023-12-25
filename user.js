@@ -11,7 +11,8 @@ async function run() {
         const bookList        = client.db('bookTreasure').collection('bookList');
         const requestBook     = client.db('bookTreasure').collection('requestBook');
         const cartList        = client.db('bookTreasure').collection('cartList');
-        const orderList       = client.db('bookTreasure').collection('orderList')
+        const orderList       = client.db('bookTreasure').collection('orderList');
+        const addressList     = client.db('bookTreasure').collection('addressList');
 
         userRouter.route('/users')
             .post(async (req, res) => {
@@ -90,7 +91,7 @@ userRouter.route('/findCartItem')
         }
       }
     ]).toArray();
-    // console.log("result => ", result);
+  //   console.log("result => ", result);
     res.json(result);
   } catch (error) {
     console.error("Error: ", error);
@@ -153,10 +154,11 @@ userRouter.route('/findCartItem')
               bookName: order.bookName,
               quantity: order.quantity,
               price: order.price*order.quantity,
-              userId: userId,
+              userId: req.body.userId,
               date: new Date(),
               bookId: order._id,
-              bookType:order.bookType
+              bookType:order.bookType,
+              delivered:false
           }
 
           await orderList.insertOne(orderItem);
@@ -189,7 +191,7 @@ userRouter.route('/findCartItem')
     userRouter.route('/getPrevousOrder')
     .post(async(req,res)=>{
       try {
-        const userId = new ObjectId(req.body.userId);
+        const userId = req.body.userId;
         const list = await orderList.find({userId}).toArray();
         res.send(list);
       } catch (e) {
@@ -229,6 +231,63 @@ userRouter.route('/findCartItem')
           res.status(500).send("Internal Server Error");
         }
     });
+
+    userRouter.route('/addAddress')
+    .post(async(req,res) => {
+      try {
+        const data = req.body;
+        await addressList.insertOne(data);
+        res.send({status:true});
+      } catch (e) {
+        console.error(e);
+      }
+    })
+
+    userRouter.route('/getAddress')
+    .post(async(req,res) => {
+      try {
+        const userId = req.body;
+        const address = await addressList.findOne(userId);
+        // console.log('address  ',userId );
+        // console.log('address  ',address );
+        res.send(address);
+      } catch (e) {
+        console.error(e);
+      }
+    })
+
+    userRouter.route('/getCheckoutList')
+    .post(async(req,res) => {
+      try {
+        const userId = req.body.userId ;
+        const list = await orderList.find({userId,delivered:false}).toArray();
+        // console.log('order list => ',list);
+        res.send(list);
+      } catch (e) {
+        console.error(e);
+      }
+    })
+
+    userRouter.route('/getAdminDeliveryList')
+    .get(async(req,res) => {
+      try {
+        const list = await orderList.find().toArray();
+        res.send(list);
+      } catch (e) {
+        console.error(e);
+      }
+    })
+
+    userRouter.route('/updateDeliveryList')
+    .post(async(req,res)=>{
+      try {
+        const id = new ObjectId(req.body.orderId);
+        await orderList.updateOne({_id:id},{$set:{delivered:true}});
+        res.send({status:true});
+      } catch (e) {
+        console.error(e);
+      }
+    })
 
         // Send a ping to confirm a successful connection
         await client.db("user").command({ ping: 1 });
