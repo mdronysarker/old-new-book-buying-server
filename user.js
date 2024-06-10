@@ -88,9 +88,9 @@ async function run() {
                 bookId: 1,
                 _id: 1,
                 image: 1,
-                bookName: 1,
+                productName: 1,
                 price: 1,
-                bookQuantity: 1,
+                productQuantity: 1,
                 bookType: 1,
                 userId: 1,
               },
@@ -112,8 +112,6 @@ async function run() {
       const book = await bookList.findOne({ _id: productId });
       res.send(book);
     });
-
-    
 
     userRouter.route("/getRelatedBook").post(async (req, res) => {
       const data = req.body.category;
@@ -165,7 +163,7 @@ async function run() {
           );
 
           const orderItem = {
-            bookName: order.bookName,
+            productName: order.productName,
             quantity: order.quantity,
             price: order.price * order.quantity,
             userId: req.body.userId,
@@ -186,7 +184,7 @@ async function run() {
           const productId = new ObjectId(order._id);
           const orderQuantity = order.quantity;
           const product = await bookList.findOne({ _id: productId });
-          const productQuantity = product.bookQuantity;
+          const productQuantity = product.productQuantity;
 
           if (orderQuantity < productQuantity) {
             const dif = productQuantity - orderQuantity;

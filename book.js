@@ -45,21 +45,12 @@ async function run() {
       }
     });
 
-    bookRouter.route("/getBookData").post(async (req, res) => {
+    bookRouter.route("/getProductData").post(async (req, res) => {
       const data = req.body;
       const finder = {};
       if (data.type === "new") finder.bookType = "new";
       else if (data.type === "old") finder.bookType = "old";
-
-      if (data.category !== null) {
-        finder.category = data.category;
-      }
-      const bookSkip = (data.page - 1) * data.perPage;
-      const result = await bookList
-        .find(finder)
-        .skip(bookSkip)
-        .limit(data.perPage)
-        .toArray();
+      const result = await bookList.find(finder).toArray();
       res.send(result);
     });
 
